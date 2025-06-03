@@ -34,6 +34,9 @@ Undo
 Flag
 : Transformed into a report to the moderation team. See the [Reports](#Flag) extension for more information.
 
+QuoteRequest
+: Request approval for a quote post. See the [Quote posts](#Quote) extension for more information.
+
 ### Payloads
 
 The first-class Object types supported by Mastodon are `Note` and `Question`.
@@ -851,6 +854,16 @@ Mastodon generates colorful preview thumbnails for attachments. This is implemen
 
 Mastodon uses the `as:sensitive` extension property to mark certain posts as sensitive. When a post is marked as sensitive, any media attached to it will be hidden by default, and if a `summary` is present, the status `content` will be collapsed behind this summary. In Mastodon, this is known as a **content warning**.
 
+### Quote posts and quote controls {#Quote}
+
+Mastodon implements experimental support for handling remote quote posts according to [FEP-044f](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md). Additionally, it understands `quoteUri`, `quoteUrl` and `_misskey_quote` for compatibility.
+
+Should a post contain multiple quotes, Mastodon only accepts the first one.
+
+Furthermore, Mastodon does not handle the full range of interaction policies, but instead converts the authorized followers to a combination of “public”, “followers” and “unknown”, defaulting to “nobody”.
+
+At this time, Mastodon does not offer authoring quotes, nor does it expose a quote policy, or produce stamps for incoming quote requests.
+
 ## Other functionality
 
 ### Secure mode {#secure-mode}
@@ -861,12 +874,12 @@ Secure mode is the foundation upon which "limited federation mode" is built. A M
 
 ### Follower synchronization mechanism
 
-Mastodon has a concept of "followers-only" posts, but expanding the followers collection is currently handled at the destination rather than at the origin (i.e., not with explicit addressing). Therefore, a mechanism to detect synchronization issues and correct them is needed. This mechanism must work on partial followers collections, rather than the full collection (which may not be public information).
+Mastodon has a concept of "followers-only" posts, but expanding the followers collection is currently handled at the destination rather than at the origin (i.e., not with explicit addressing). Therefore, a mechanism to detect synchronization issues and correct them is needed. This mechanism must work on partial followers collections, rather than the full collection (which may not be public information). This collection is partial in the sense that it only contains the followers from a specific instance, but it MUST contain all of those followers. A follower being omitted from the collection would lead to that follow relationship getting severed.
 
 When delivering a message to a remote user, an optional `Collection-Synchronization` HTTP header is attached, following the same syntax as the `Signature` header, with the following attributes:
 
 - `collectionId` = MUST be the sender's `followers` collection
-- `url` = a URL to a partial collection containing the identifiers of the sender's followers residing on the receiver's instance. MUST reside on the same domain as the actor itself, and SHOULD be only accessible with a signed query from the receiver's instance
+- `url` = a URL to a partial collection containing the identifier of every one of the sender's followers residing on the receiver's instance. MUST reside on the same domain as the actor itself, and SHOULD be only accessible with a signed query from the receiver's instance
 - `digest` = hexadecimal representation of the XORed SHA256 digests of each of the identifiers in the partial collection
 
 Example:
